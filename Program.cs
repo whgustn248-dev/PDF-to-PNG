@@ -127,7 +127,7 @@ public sealed class MainForm : Form
         convertButton.Click += async (_, _) => await ConvertAsync();
         Controls.Add(convertButton);
 
-        Controls.Add(new Label
+         Controls.Add(new Label
         {
             Text = "변환된 파일은 각 PDF와 같은 위치의 '[PDF이름]_PNG' 폴더에 저장됩니다.",
             AutoSize = true,
@@ -185,7 +185,7 @@ public sealed class MainForm : Form
         status.Text = $"{files.Count}개 PDF 선택됨";
     }
 
- private async Task ConvertAsync()
+    private async Task ConvertAsync()
     {
         if (files.Count == 0)
         {
@@ -200,8 +200,6 @@ public sealed class MainForm : Form
 
         try
         {
-            // PDF마다 별도의 스트림을 사용해 페이지 수를 먼저 확인합니다.
-            // 이후 렌더링에서도 새 스트림을 열어 스트림 위치 문제를 피합니다.
             int totalPages = 0;
 
             foreach (var pdf in files)
@@ -220,50 +218,75 @@ public sealed class MainForm : Form
 
                 Directory.CreateDirectory(outputDir);
 
-                var options = new RenderOptions(Dpi: dpi);
+                int pageCount;
 
-                // GetPageCount에 사용한 스트림과 다른 새 스트림을 사용합니다.
-                using var renderStream = File.OpenRead(pdf);
-
-                int pageNumber = 0;
-
-                foreach (SKBitmap bitmap in Conversion.ToImages(
-                    renderStream,
-                    leaveOpen: false,
-                    password: null,
-                    options: options))
+                using (var countStream = File.OpenRead(pdf))
                 {
-                    using (bitmap)
+                    pageCount = Conversion.GetPageCount(countStream);
+                }
+
+                for (int pageIndex = 0; pageIndex < pageCount; pageIndex++)
+                {
+                    // PDF 페이지의 실제 크기(72 DPI 기준, pt)를 가져온 뒤
+                    // 원하는 DPI에 맞는 픽셀 크기를 직접 계산합니다.
+                    // 이렇게 하면 300 DPI 선택 시 A4가 약 2480 x 3504~3508px로
+                    // 정확하게 렌더링됩니다.
+                    SizeF pageSize;
+
+ using (var sizeStream = File.OpenRead(pdf))
                     {
-                        pageNumber++;
+                        pageSize = Conversion.GetPageSize(
+                            sizeStream,
+                            page: pageIndex);
+                    }
 
-                        string outputPath = Path.Combine(
-                            outputDir,
-                            $"{pageNumber:0000}.png");
+                    int pixelWidth = Math.Max(
+                        1,
+                        (int)Math.Round(pageSize.Width * dpi / 72.0));
 
-                     using SKData? data =
-                            bitmap.Encode(SKEncodedImageFormat.Png, 100);
+                    int pixelHeight = Math.Max(
+                        1,
+                        (int)Math.Round(pageSize.Height * dpi / 72.0));
 
-                        if (data == null)
-                            throw new InvalidOperationException(
-                                $"PNG 인코딩에 실패했습니다: {outputPath}");
+                    var options = new RenderOptions(
+                        Dpi: dpi,
+                        Width: pixelWidth,
+                        Height: pixelHeight,
+                        WithAspectRatio: false,
+                        WithAnnotations: true,
+                        WithFormFill: true,
+                        AntiAliasing: PdfAntiAliasing.All);
 
-                        using FileStream output = File.Create(outputPath);
-                        data.SaveTo(output);
+                    string outputPath = Path.Combine(
+                        outputDir,
+                        $"{pageIndex + 1:0000}.png");
+
+                    // 페이지마다 새 스트림을 사용해 안정적으로 렌더링합니다.
+                    using (var renderStream = File.OpenRead(pdf))
+                    {
+                        Conversion.SavePng(
+                            outputPath,
+                            renderStream,
+                            page: pageIndex,
+                            leaveOpen: false,
+                            password: null,
+                            options: options);
                     }
 
                     done++;
+
                     int percent = totalPages == 0
                         ? 100
                         : done * 100 / totalPages;
 
- progress.Value = Math.Min(percent, 100);
-                    status.Text = $"변환 중... {done} / {totalPages} 페이지";
+                    progress.Value = Math.Min(percent, 100);
+                    status.Text =
+                        $"변환 중... {done} / {totalPages} 페이지";
                     Application.DoEvents();
                 }
             }
 
-            progress.Value = 100;
+ progress.Value = 100;
             status.Text = "변환 완료!";
 
             MessageBox.Show(
@@ -288,4 +311,4 @@ public sealed class MainForm : Form
             convertButton.Enabled = true;
         }
     }
-}
+        
