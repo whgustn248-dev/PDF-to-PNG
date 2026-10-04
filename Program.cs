@@ -96,7 +96,7 @@ public sealed class MainForm : Form
             Location = new Point(28, 355)
         });
 
-        dpiBox.Location = new Point(90, 351);
+ dpiBox.Location = new Point(90, 351);
         dpiBox.Width = 100;
         dpiBox.DropDownStyle = ComboBoxStyle.DropDownList;
         dpiBox.Items.AddRange(new object[] { "150", "200", "300", "400", "600" });
@@ -127,7 +127,7 @@ public sealed class MainForm : Form
         convertButton.Click += async (_, _) => await ConvertAsync();
         Controls.Add(convertButton);
 
-         Controls.Add(new Label
+        Controls.Add(new Label
         {
             Text = "변환된 파일은 각 PDF와 같은 위치의 '[PDF이름]_PNG' 폴더에 저장됩니다.",
             AutoSize = true,
@@ -198,7 +198,7 @@ public sealed class MainForm : Form
         convertButton.Enabled = false;
         progress.Value = 0;
 
-        try
+try
         {
             int totalPages = 0;
 
@@ -233,7 +233,7 @@ public sealed class MainForm : Form
                     // 정확하게 렌더링됩니다.
                     SizeF pageSize;
 
- using (var sizeStream = File.OpenRead(pdf))
+                    using (var sizeStream = File.OpenRead(pdf))
                     {
                         pageSize = Conversion.GetPageSize(
                             sizeStream,
@@ -286,7 +286,7 @@ public sealed class MainForm : Form
                 }
             }
 
- progress.Value = 100;
+            progress.Value = 100;
             status.Text = "변환 완료!";
 
             MessageBox.Show(
@@ -296,7 +296,7 @@ public sealed class MainForm : Form
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
         }
-        catch (Exception ex)
+         catch (Exception ex)
         {
             MessageBox.Show(
                 "변환 중 오류가 발생했습니다.\n\n" + ex.Message,
@@ -311,4 +311,4 @@ public sealed class MainForm : Form
             convertButton.Enabled = true;
         }
     }
-        
+}
