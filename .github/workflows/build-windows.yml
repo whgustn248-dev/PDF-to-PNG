@@ -3,7 +3,7 @@ name: Build Windows EXE
 on:
   workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
@@ -16,7 +16,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: "8.0.x"
 
       - name: Restore
         run: dotnet restore
@@ -32,10 +32,37 @@ jobs:
           -p:EnableCompressionInSingleFile=true
           -o publish
 
+      - name: Check publish output
+        shell: pwsh
+        run: |
+          Write-Host "=== Publish folder ==="
+          Get-ChildItem -Path publish -Recurse
+
+          $exe = Get-ChildItem -Path publish -Filter *.exe -File | Select-Object -First 1
+
+          if (-not $exe) {
+            Write-Error "EXE 파일을 찾을 수 없습니다."
+            exit 1
+          }
+
+          Write-Host "찾은 EXE: $($exe.FullName)"
+
       - name: Zip EXE
         shell: pwsh
         run: |
-          Compress-Archive -Path publish/PDF_to_PNG.exe -DestinationPath PDF_to_PNG_Windows.zip
+          $exe = Get-ChildItem -Path publish -Filter *.exe -File | Select-Object -First 1
+
+          if (-not $exe) {
+            Write-Error "EXE 파일을 찾을 수 없습니다."
+            exit 1
+          }
+
+          Write-Host "압축할 EXE: $($exe.FullName)"
+
+          Compress-Archive `
+            -Path $exe.FullName `
+            -DestinationPath PDF_to_PNG_Windows.zip `
+            -Force
 
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
