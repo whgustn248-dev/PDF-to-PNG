@@ -229,13 +229,39 @@ public sealed class MainForm : Form
 
                 Directory.CreateDirectory(outputDir);
 
-                using var stream = File.OpenRead(pdf);
-                int pageCount = Conversion.GetPageCount(stream);
+           using var stream = File.OpenRead(pdf);
 
-                var options = new RenderOptions { Dpi = dpi };
+Conversion.GetPageCount(stream);
+stream.Position = 0;
 
-                int pageNumber = 0;
-                foreach (var bitmap in Conversion.ToImages(stream, true, null, options))
+var options = new RenderOptions { Dpi = dpi };
+
+int pageNumber = 0;
+
+foreach (var bitmap in Conversion.ToImages(stream, true, null, options))
+{
+    pageNumber++;
+
+    string outputPath = Path.Combine(
+        outputDir,
+        $"{pageNumber:0000}.png");
+
+    using var image = SKImage.FromBitmap(bitmap);
+    using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+    using var output = File.Create(outputPath);
+
+    data.SaveTo(output);
+
+    bitmap.Dispose();
+
+    done++;
+    int percent = totalPages == 0 ? 100 : done * 100 / totalPages;
+
+    progress.Value = Math.Min(percent, 100);
+    status.Text = $"변환 중... {done} / {totalPages} 페이지";
+
+    Application.DoEvents();
+}
                 {
                     pageNumber++;
 
