@@ -96,7 +96,7 @@ public sealed class MainForm : Form
             Location = new Point(28, 355)
         });
 
- dpiBox.Location = new Point(90, 351);
+        dpiBox.Location = new Point(90, 351);
         dpiBox.Width = 100;
         dpiBox.DropDownStyle = ComboBoxStyle.DropDownList;
         dpiBox.Items.AddRange(new object[] { "150", "200", "300", "400", "600" });
@@ -119,7 +119,7 @@ public sealed class MainForm : Form
         status.Location = new Point(28, 430);
         Controls.Add(status);
 
-        convertButton.Text = "PNG로 변환 시작";
+ convertButton.Text = "PNG로 변환 시작";
         convertButton.Font = new Font("맑은 고딕", 11, FontStyle.Bold);
         convertButton.Width = 230;
         convertButton.Height = 45;
@@ -198,7 +198,7 @@ public sealed class MainForm : Form
         convertButton.Enabled = false;
         progress.Value = 0;
 
-try
+        try
         {
             int totalPages = 0;
 
@@ -212,8 +212,19 @@ try
 
             foreach (var pdf in files.ToArray())
             {
+                // PDF 원본 위치와 관계없이 항상
+                // 바탕화면\변환 완료 폴더에 저장합니다.
+                string desktop = Environment.GetFolderPath(
+                    Environment.SpecialFolder.DesktopDirectory);
+
+     string completedRoot = Path.Combine(
+                    desktop,
+                    "변환 완료");
+
+                Directory.CreateDirectory(completedRoot);
+
                 string outputDir = Path.Combine(
-                    Path.GetDirectoryName(pdf)!,
+                    completedRoot,
                     Path.GetFileNameWithoutExtension(pdf) + "_PNG");
 
                 Directory.CreateDirectory(outputDir);
@@ -261,6 +272,11 @@ try
                         outputDir,
                         $"{pageIndex + 1:0000}.png");
 
+ status.Text =
+                        $"변환 중... {done} / {totalPages} 페이지  " +
+                        $"({pixelWidth} × {pixelHeight}px)";
+                    Application.DoEvents();
+
                     // 페이지마다 새 스트림을 사용해 안정적으로 렌더링합니다.
                     using (var renderStream = File.OpenRead(pdf))
                     {
@@ -289,14 +305,18 @@ try
             progress.Value = 100;
             status.Text = "변환 완료!";
 
+            string desktop = Environment.GetFolderPath(
+                Environment.SpecialFolder.DesktopDirectory);
+            string completedRoot = Path.Combine(desktop, "변환 완료");
+
             MessageBox.Show(
                 "모든 PDF 변환이 완료되었습니다.\n\n" +
-                "각 PDF와 같은 위치에 '[PDF이름]_PNG' 폴더가 생성되었습니다.",
+                "바탕화면의 '변환 완료' 폴더에 저장되었습니다.",
                 "변환 완료",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
         }
-         catch (Exception ex)
+        catch (Exception ex)
         {
             MessageBox.Show(
                 "변환 중 오류가 발생했습니다.\n\n" + ex.Message,
