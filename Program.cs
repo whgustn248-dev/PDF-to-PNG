@@ -110,7 +110,7 @@ public sealed class MainForm : Form
             Location = new Point(200, 355)
         });
 
-        progress.Location = new Point(28, 395);
+         progress.Location = new Point(28, 395);
         progress.Size = new Size(640, 24);
         Controls.Add(progress);
 
@@ -119,7 +119,7 @@ public sealed class MainForm : Form
         status.Location = new Point(28, 430);
         Controls.Add(status);
 
- convertButton.Text = "PNG로 변환 시작";
+        convertButton.Text = "PNG로 변환 시작";
         convertButton.Font = new Font("맑은 고딕", 11, FontStyle.Bold);
         convertButton.Width = 230;
         convertButton.Height = 45;
@@ -217,7 +217,7 @@ public sealed class MainForm : Form
                 string desktop = Environment.GetFolderPath(
                     Environment.SpecialFolder.DesktopDirectory);
 
-     string completedRoot = Path.Combine(
+  string completedRoot = Path.Combine(
                     desktop,
                     "변환 완료");
 
@@ -272,7 +272,7 @@ public sealed class MainForm : Form
                         outputDir,
                         $"{pageIndex + 1:0000}.png");
 
- status.Text =
+                    status.Text =
                         $"변환 중... {done} / {totalPages} 페이지  " +
                         $"({pixelWidth} × {pixelHeight}px)";
                     Application.DoEvents();
@@ -305,9 +305,6 @@ public sealed class MainForm : Form
             progress.Value = 100;
             status.Text = "변환 완료!";
 
-            string desktop = Environment.GetFolderPath(
-                Environment.SpecialFolder.DesktopDirectory);
-            string completedRoot = Path.Combine(desktop, "변환 완료");
 
             MessageBox.Show(
                 "모든 PDF 변환이 완료되었습니다.\n\n" +
